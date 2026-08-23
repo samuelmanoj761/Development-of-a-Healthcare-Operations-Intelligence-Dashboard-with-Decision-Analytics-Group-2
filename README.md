@@ -1,111 +1,158 @@
-# Public Health Analytics Dashboard
+# Development of a Healthcare Operations Intelligence Dashboard with Decision Analytics — Group 2
 
-Streamlit multipage application presenting the Public Health Analytics
-dashboard suite from a single entry point, built on a star-schema data
-model (dimension + fact CSV extracts).
+**Turning public health data into actionable decision analytics for outbreak
+monitoring, resource planning and programme coverage.**
 
-`app.py` links all 5 dashboards together with a single left-hand
-navigation menu (`st.navigation`), **Executive Public Health Overview**
-loading first by default.
+Dashboard 5 — *Health Programs & Population Vulnerability*
 
-| # | Dashboard | Status |
-|---|---|---|
-| 1 | Executive Public Health Overview | ✅ Built — 2 tabs: Executive Summary + Disease Surveillance |
-| 2 | Geographic & Environmental Intelligence | ⬜ Empty |
-| 3 | Laboratory & Healthcare Capacity | ⬜ Empty |
-| 4 | Outbreak Monitoring & Forecasting | ⬜ Empty |
-| 5 | Health Programs & Population Vulnerability | ⬜ Empty |
+Built by **Samuel Manoj Pinipe** (Group 2) as part of the project internship,
+July – August 2026.
 
-Disease Surveillance content (disease-wise trends, state heatmap, outbreak
-alerts, testing/positivity) now lives **inside** the Executive Public Health
-Overview page as its own tab, sharing the same sidebar filter panel as the
-Executive Summary tab — no separate nav entry, no duplicate filters.
+---
 
-The four empty dashboards already have their data available through
-`src/data_loader.py` (one loader function per fact table: `get_outbreak_master()`,
-`get_environmental_master()`, `get_programs_master()`, `get_lab_master()`) —
-build the visuals directly on top of that, no data plumbing needed.
+## About this repository
 
-## Project Structure
+This is my individual repository. It contains the dashboard page I built,
+the data behind it, the code used to clean and prepare that data, and my
+three internship artifact files.
+
+The application is built with Python (Pandas, NumPy) and Streamlit, with
+Plotly for the charts.
+
+---
+
+## Folder structure
 
 ```
-dashboard/
-├── app.py                                              # Entry point — wires all 5 dashboards into one nav menu
 ├── dashboards/
-│   ├── 0_Executive_Public_Health_Overview.py           # ✅ Built — 2 tabs: Executive Summary + Disease Surveillance
-│   ├── 1_Geographic_Environmental_Intelligence.py      # ⬜ Empty placeholder
-│   ├── 2_Laboratory_Healthcare_Capacity.py             # ⬜ Empty placeholder
-│   ├── 3_Outbreak_Monitoring_Forecasting.py            # ⬜ Empty placeholder
-│   └── 4_Health_Programs_Population_Vulnerability.py   # ⬜ Empty placeholder
+│   └── 4_Health_Programs_Population_Vulnerability.py
+├── data/
+│   ├── fact_health_programs.csv
+│   ├── dim_program.csv
+│   ├── dim_state.csv
+│   ├── dim_date.csv
+│   └── dim_source.csv
 ├── src/
-│   ├── data_loader.py             # Cached CSV loading + star-schema joins (all 5 fact tables ready)
-│   ├── filters.py                 # Shared sidebar filter panel
-│   ├── kpis.py                    # KPI calculation logic (unit-testable)
-│   └── styling.py                 # Shared CSS + reusable UI components
-├── data/                          # Cleaned CSV extracts (dim_*, fact_*)
-├── .streamlit/
-│   └── config.toml                # Corporate theme configuration
+│   ├── __init__.py
+│   ├── data_loader.py                   cached loading and table joins
+│   ├── filters.py                       sidebar filter panel
+│   ├── kpis.py                          KPI calculation and formatting
+│   └── styling.py                       shared styling and components
+├── Internship_artifacts/
+│   ├── Agile_Template_v0.1_Samuel_Manoj_Pinipe.xlsx
+│   ├── Unit_Test_Plan_v0.1_Samuel_Manoj_Pinipe.xlsx
+│   └── Defect_Tracker_v0.1_Samuel_Manoj_Pinipe.xlsx
+├── app.py                               entry point and navigation
 ├── requirements.txt
+├── LICENSE
 └── README.md
 ```
 
-> Note: the pages folder is named `dashboards/`, not `pages/` — Streamlit
-> reserves the literal `pages/` folder name for its older auto-navigation
-> feature, which conflicts with the `st.navigation` API used in `app.py`.
+---
 
-## Adding a new dashboard later
-
-1. Drop a new file in `dashboards/`.
-2. Add one `st.Page("dashboards/your_file.py", title="Your Title")` line
-   in `app.py` and include it in the list passed to `st.navigation([...])`.
-
-No other file needs to change.
-
-## Running Locally
+## How to run
 
 ```bash
-cd dashboard
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The app opens at `http://localhost:8501`. Use the left sidebar to switch
-between dashboards, and to filter by Region, State, Year, Month, Disease
-Type, Disease, and Primary Source (on dashboards that use
-`render_sidebar_filters()`).
+The application opens at `http://localhost:8501`. Run the command from the
+project folder so that `src` and `dashboards` can be imported.
 
-## Data Model
+---
 
-| Table | Grain | Key Columns |
+## Data model
+
+A star schema of one fact table and four dimension tables. The raw fact file
+has 6,981 rows covering 32 states, 6 programmes and 36 months. After cleaning,
+6,885 rows remain.
+
+| Table | Rows | Grain |
 |---|---|---|
-| `dim_dates` | 1 row per month | `date_id`, `year`, `month_name`, `quarter` |
-| `dim_state` | 1 row per state | `state_id`, `state_name`, `region`, `population` |
-| `dim_disease` | 1 row per disease | `disease_id`, `disease_name`, `disease_category` |
-| `dim_source` | 1 row per reporting source | `source_id`, `source_name` |
-| `dim_program` | 1 row per health program | `program_id`, `program_name` |
-| `fact_disease_surveillance` | state × date × disease × source | cases, deaths, CFR, recovery rate, risk score |
-| `fact_outbreak` | state × date × disease × source | outbreak/alert/containment metrics |
-| `fact_environmental` | state × date | AQI, rainfall, sanitation, environmental risk |
-| `fact_health_programs` | state × date × program | coverage, beneficiaries, vulnerability index |
-| `fact_lab_healthcare` | state × date | testing, positivity, vaccination, infrastructure |
+| fact_health_programs | 6,981 | one row per state, month and programme |
+| dim_program | 6 | one row per programme |
+| dim_state | 32 | one row per state |
+| dim_date | 36 | one row per month |
+| dim_source | 6 | one row per source (not joined — no key in the fact table) |
 
-## KPI Definitions (Executive Public Health Overview)
+---
 
-| KPI | Formula |
+## KPIs
+
+| KPI | Calculation |
 |---|---|
-| Total Population Under Surveillance | Sum of distinct `population_under_surveillance` per state/date |
-| Total Reported Cases | Sum of `total_reported_cases` |
-| Active Cases | Sum of `active_cases` |
-| Recovered Cases | Sum of `recovered_cases` |
-| Deaths (Monthly) | Sum of `deaths` |
-| Case Fatality Rate | Deaths ÷ Total Reported Cases × 100 |
-| Recovery Rate | Recovered ÷ Total Reported Cases × 100 |
-| Public Health Risk Score | Mean of `public_health_risk_score` across filtered records |
+| Program Coverage | average of program_coverage_pct |
+| People Screened | sum of people_screened |
+| Beneficiaries Reached | sum of beneficiaries_reached |
+| Maternal Health Beneficiaries | sum of maternal_health_beneficiaries |
+| Child Immunization | sum of child_immunization_count |
+| High-Risk Individuals | sum of high_risk_individuals |
+| Chronic Disease Patients | sum of chronic_disease_patients |
+| Health Vulnerability Index | average of health_vulnerability_index |
 
-## Notes
+Very large counts are shown in short form (K, M, B) because a ten digit value
+does not fit inside a card. The exact value is printed below each card and is
+also shown on hover, so nothing is hidden.
 
-- Rates (CFR, Recovery Rate, Hospitalization/ICU Rate) are **recomputed from
-  aggregated totals** rather than averaged row-level percentages, to avoid
-  bias when aggregating across states/diseases of very different case volume.
-- Conditional formatting on the State Ranking table uses `pandas.Styler`
-  background gradients (Cases → Blue, CFR → Red, Recovery Rate → Green).
+---
+
+## Visuals
+
+1. Program coverage over time — line chart, one line per year.
+2. People screened against beneficiaries reached — grouped bars by state.
+3. Population split by state — stacked bars of children, adults and elderly.
+4. High-risk population by state — treemap.
+5. Composite health vulnerability index by state — bar chart.
+6. Socioeconomic score against health vulnerability — bubble chart with the
+   correlation printed below it.
+
+---
+
+## Filters
+
+State, Year, Month and Programme, all in the sidebar. Every filter applies to
+every KPI and every chart. `All` means no filter for that box. If a selection
+returns no rows, the page shows a message instead of drawing empty charts.
+
+---
+
+## Data cleaning decisions
+
+- Duplicate fact rows are removed before any calculation.
+- Dimension tables are made unique on their id column, so the join does not
+  increase the row count.
+- Rows with negative counts are removed, since a count cannot be negative.
+- Text and blank entries in number columns become missing values instead of
+  breaking a chart.
+- Children, adults and elderly repeat across all six programme rows for the
+  same state and month, so they are read from a duplicate free table and
+  averaged. Every other measure genuinely varies by programme and is summed.
+
+---
+
+## Known limitations
+
+- The vulnerability visual is a bar chart, not a filled map. A map needs an
+  India boundary file, which is not part of this dataset.
+- There is no source filter. `dim_source.csv` is provided, but the fact table
+  has no source key to join on.
+- Child immunization values look too large in the source data — a single
+  state, month and programme row records around 8 to 12 million against a
+  child population of about 13 million. The calculation is correct, but the
+  column appears cumulative or wrongly scaled, so the figure should be
+  confirmed before it is quoted.
+
+---
+
+## Internship artifacts
+
+The `Internship_artifacts` folder holds my individually filled Agile Template,
+Unit Test Plan and Defect Tracker, covering my work from the start of the
+internship to the final submission.
+
+---
+
+## License
+
+Released under the MIT License. See the LICENSE file.
