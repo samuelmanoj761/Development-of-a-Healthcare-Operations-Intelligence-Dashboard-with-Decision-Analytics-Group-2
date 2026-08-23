@@ -1,63 +1,67 @@
+
+App · PY
 """
 app.py
 ------
-Single entry point for the Public Health Analytics multipage app.
-
-Wires the 5-dashboard suite into one left-hand navigation menu (via
-st.navigation) so the whole suite can be presented from one running app.
-
-Order in the sidebar = order below. Executive Public Health Overview is
-first and loads by default; it's the only dashboard that's fully built out
-(it contains two tabs internally: Executive Summary and Disease
-Surveillance, sharing one filter panel). The other four are empty
-placeholders (data layer already wired up in src/data_loader.py) ready to
-be filled in as each one is finished.
-
+Entry point for the Healthcare Operations Intelligence dashboard.
+ 
+Sets the page up and builds the navigation. Every chart and every
+calculation lives in the dashboards and src folders, so this file
+stays small.
+ 
 Run with:  streamlit run app.py
 """
-
+ 
+from pathlib import Path
+ 
 import streamlit as st
-
+ 
+ 
 st.set_page_config(
-    page_title="HealthSentinel",
+    page_title="Healthcare Operations Intelligence",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-executive_overview = st.Page(
-    "dashboards/0_Executive_Public_Health_Overview.py",
-    title="Executive Public Health Overview",
-    default=True,
+ 
+ 
+# Every .py file in the dashboards folder becomes a page. The number at
+# the front of the file name sets the order and is removed from the
+# label, so 4_Health_Programs_Population_Vulnerability.py is shown as
+# "Health Programs Population Vulnerability".
+ 
+DASHBOARD_DIR = Path(__file__).parent / "dashboards"
+ 
+ 
+def page_title(file_path):
+    """Turn 4_Health_Programs.py into 'Health Programs'."""
+ 
+    name = file_path.stem
+ 
+    if "_" in name and name.split("_")[0].isdigit():
+        name = name.split("_", 1)[1]
+ 
+    return name.replace("_", " ")
+ 
+ 
+dashboard_files = sorted(
+    f for f in DASHBOARD_DIR.glob("*.py")
+    if not f.name.startswith("_")
 )
-geographic_environmental = st.Page(
-    "dashboards/1_Geographic_Environmental_Intelligence.py",
-    title="Geographic & Environmental Intelligence",
-)
-laboratory_healthcare = st.Page(
-    "dashboards/2_Laboratory_Healthcare_Capacity.py",
-    title="Laboratory & Healthcare Capacity",
-)
-outbreak_monitoring = st.Page(
-    "dashboards/3_Outbreak_Monitoring_Forecasting.py",
-    title="Outbreak Monitoring & Forecasting",
-)
-health_programs_vulnerability = st.Page(
-    "dashboards/4_Health_Programs_Population_Vulnerability.py",
-    title="Health Programs & Population Vulnerability",
-)
-
-# Flat list -> plain left-nav list, no section header, matching the existing
-# look. Add further st.Page(...) entries here for any future dashboard.
-pg = st.navigation(
-    [
-        executive_overview,
-        geographic_environmental,
-        laboratory_healthcare,
-        outbreak_monitoring,
-        health_programs_vulnerability,
-    ]
-)
-
-pg.run()
+ 
+ 
+if not dashboard_files:
+    st.error("No dashboards were found in the dashboards folder.")
+    st.stop()
+ 
+ 
+pages = [
+    st.Page(str(f), title=page_title(f), icon="🩺")
+    for f in dashboard_files
+]
+ 
+ 
+navigation = st.navigation(pages, position="sidebar")
+ 
+navigation.run()
  
