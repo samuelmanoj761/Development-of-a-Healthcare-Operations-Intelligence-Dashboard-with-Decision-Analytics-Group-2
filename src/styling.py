@@ -15,11 +15,20 @@ PRIMARY = "#17324D"    # Deep Navy — sidebar, headings, key branding
 ACCENT = "#0F6B78"     # Teal Blue — active states, buttons, highlights, key chart data
 NEUTRAL_BG = "#F5F7FA"  # Off White — page background
 CARD_BG = "#FFFFFF"    # White — KPI cards, tables, panels, charts
-TEXT = "#1F2937"       # Charcoal — headings & primary information
-MUTED = "#64748B"      # Slate — labels & supporting information
+TEXT = "#000000"       # Charcoal — headings & primary information
+MUTED = "#000000"      # Slate — labels & supporting information
 SUCCESS = "#16855B"    # Green
 WARNING = "#C98A00"    # Amber
 DANGER = "#C43D3D"     # Red
+
+# Risk-style heatmap scale — Red (high/critical) -> Yellow (medium/warning)
+# -> Green (low/safe), kept light/pastel so it reads clearly with dark text
+# rather than needing white text on saturated cells.
+RISK_HEATMAP_SCALE = [
+    [0.0, "#C9EAD3"],   # low / safe -> light green
+    [0.5, "#FFE9A8"],   # medium / warning -> light yellow
+    [1.0, "#F6B4AE"],   # high / critical -> light red
+]
 
 CUSTOM_CSS = f"""
 <style>
@@ -57,7 +66,7 @@ CUSTOM_CSS = f"""
         margin-bottom: 26px;
     }}
     .dash-header h1 {{
-        font-size: 1.35rem;
+        font-size: 1.7rem;
         margin: 0;
         font-weight: 700;
         color: white;
@@ -65,7 +74,7 @@ CUSTOM_CSS = f"""
     .dash-header p {{
         margin: 2px 0 0 0;
         font-size: 0.82rem;
-        color: #D7E4E6;
+        color: #FFFFFF;
     }}
     .dash-badge {{
         background: rgba(255,255,255,0.15);
@@ -90,11 +99,11 @@ CUSTOM_CSS = f"""
         justify-content: space-between;
     }}
     .kpi-label {{
-        font-size: 0.68rem;
+        font-size: 0.76rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         color: {MUTED};
-        font-weight: 600;
+        font-weight: 750;
         margin-bottom: 6px;
         white-space: normal;
         overflow: visible;
@@ -104,7 +113,7 @@ CUSTOM_CSS = f"""
         min-height: 2.3em;
     }}
     .kpi-value {{
-        font-size: clamp(1.05rem, 1.6vw, 1.55rem);
+        font-size: clamp(1.12rem, 1.75vw, 1.65rem);
         font-weight: 700;
         color: {TEXT};
         line-height: 1.2;
@@ -119,7 +128,7 @@ CUSTOM_CSS = f"""
     }}
 
     .section-title {{
-        font-size: 1.02rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: {TEXT};
         margin: 6px 0 4px 0;
@@ -127,10 +136,40 @@ CUSTOM_CSS = f"""
         padding-left: 10px;
     }}
     .section-caption {{
-        font-size: 0.78rem;
+        font-size: 0.95rem;
         color: {MUTED};
         padding-left: 14px;
         margin-bottom: 14px;
+    }}
+
+    /* Decision Snapshot cards — used by snapshot_row() on every dashboard
+       page so the 3-signal callout renders as the same dark boxed card
+       everywhere, not just on the Geographic & Environmental page.
+       Previously used a low-contrast grey-blue label (#86a1b4) on a
+       translucent dark background, which made the card headings hard to
+       read. Solid navy + a bright amber label + a teal accent bar gives
+       clear separation between label and value at a glance. */
+    .small-card {{
+        border: 1px solid rgba(255,255,255,0.10);
+        border-left: 4px solid {ACCENT};
+        background: {PRIMARY};
+        border-radius: 13px;
+        padding: 14px 16px;
+        height: 100%;
+        box-shadow: 0 2px 10px rgba(18, 53, 91, 0.18);
+    }}
+    .small-card-title {{
+        color: #FFC24B;
+        font-size: 0.74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }}
+    .small-card-value {{
+        color: #FFFFFF;
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin-top: 7px;
     }}
 
     /* Card-style wrapper so each chart/table reads as its own panel */
@@ -139,11 +178,179 @@ CUSTOM_CSS = f"""
         border-radius: 10px;
     }}
 
+    /* ================================
+       GLOBAL CAPTION / SMALL-TEXT OVERRIDE
+       st.caption() and similar helper text render very light grey by
+       default, which is hard to read against the light page background.
+       Force it to solid black everywhere in the main content area (the
+       sidebar has its own white-on-navy override further down).
+       ================================ */
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] *,
+    .stCaption,
+    .stCaption * {{
+        color: {TEXT} !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* ================================
+       MAIN-PAGE WIDGET CONTRAST (belt-and-suspenders)
+       Every selectbox / multiselect / date-input / number-input that
+       lives OUTSIDE the sidebar (i.e. everywhere filters now live, plus
+       the Upload & Custom Analysis pickers) must render dark, readable
+       text on a light fill regardless of the active theme config —
+       this does not touch anything inside section[data-testid="stSidebar"].
+       ================================ */
+    div[data-baseweb="select"] > div {{
+        background-color: #FFFFFF !important;
+        border-color: #CBD5E1 !important;
+    }}
+    div[data-baseweb="select"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+        opacity: 1 !important;
+        font-size: 0.95rem !important;
+    }}
+    /* Widget labels ("State" / "Year" / "Month") above the main-page
+       filter selects — Streamlit gives these no explicit size by default,
+       so bump them up to match the larger filter-bar text below. */
+    div[data-testid="stVerticalBlockBorderWrapper"] label p,
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stWidgetLabel"] p {{
+        font-size: 0.95rem !important;
+        font-weight: 650 !important;
+        color: {TEXT} !important;
+    }}
+    div[data-baseweb="select"] svg {{
+        fill: {TEXT} !important;
+    }}
+
+    /* Selected multiselect values: high-contrast teal chips with white text.
+       The old global select rule forced chip text to black, which made the
+       selected filters difficult to read on the dark teal chip background. */
+    div[data-baseweb="select"] [data-baseweb="tag"] {{
+        background-color: {ACCENT} !important;
+        border: 1px solid {ACCENT} !important;
+        border-radius: 6px !important;
+    }}
+    div[data-baseweb="select"] [data-baseweb="tag"] *,
+    div[data-baseweb="select"] [data-baseweb="tag"] span {{
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }}
+    div[data-baseweb="select"] [data-baseweb="tag"] svg {{
+        fill: #FFFFFF !important;
+        color: #FFFFFF !important;
+    }}
+    div[data-baseweb="popover"] li {{
+        color: {TEXT} !important;
+        background-color: #FFFFFF !important;
+    }}
+    div[data-baseweb="popover"] li:hover {{
+        background-color: #EEF3F6 !important;
+    }}
+    [data-testid="stDateInput"] input,
+    [data-testid="stNumberInput"] input,
+    [data-testid="stTextInput"] input {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+        background-color: #FFFFFF !important;
+    }}
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
+        background-color: rgba(255,255,255,0.08) !important;
+        border-color: rgba(255,255,255,0.25) !important;
+    }}
+    section[data-testid="stSidebar"] div[data-baseweb="select"] * {{
+        color: #F8FBFF !important;
+        -webkit-text-fill-color: #F8FBFF !important;
+    }}
+
+    /* ================================
+       MAIN-PAGE FILTER BAR
+       Card-style container that holds each dashboard's filters at the
+       top of the main content area (replacing sidebar filter panels).
+       ================================ */
+    .active-filter-summary {{
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+        margin-top: 12px;
+        padding: 10px 12px;
+        background: #F0F7F8;
+        border: 1px solid #CFE1E4;
+        border-radius: 8px;
+        font-size: 0.92rem;
+        color: {PRIMARY};
+    }}
+    .active-filter-summary .summary-label {{
+        font-weight: 800;
+        margin-right: 2px;
+    }}
+    .active-filter-chip {{
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: {ACCENT};
+        color: #FFFFFF !important;
+        font-weight: 700;
+        line-height: 1.1;
+        font-size: 0.92rem;
+    }}
+
+    .filter-bar-title {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: {TEXT};
+        margin-bottom: 2px;
+    }}
+    .filter-bar-caption {{
+        font-size: 0.9rem;
+        color: {MUTED};
+        margin-bottom: 10px;
+    }}
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        border: 1px solid #E2E8F0 !important;
+    }}
+
     section[data-testid="stSidebar"] {{
         background-color: {PRIMARY};
     }}
+
+    /* Sidebar logo (HealthSentinel name + icon, set via st.logo()) —
+       Streamlit renders this quite small by default; size it up so the
+       brand reads clearly at the top of the nav. */
+    [data-testid="stSidebar"] [data-testid="stLogo"] {{
+        height: 3.2rem !important;
+        max-height: none !important;
+        width: auto !important;
+        margin: 14px 0 10px 18px !important;
+    }}
+    [data-testid="stSidebarCollapsedControl"] [data-testid="stLogo"] {{
+        height: 2.4rem !important;
+    }}
+
     section[data-testid="stSidebar"] * {{
         color: #E8EDF1 !important;
+    }}
+    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] *,
+    section[data-testid="stSidebar"] .stCaption,
+    section[data-testid="stSidebar"] .stCaption * {{
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        opacity: 1 !important;
+    }}
+    section[data-testid="stSidebar"] .stMarkdown,
+    section[data-testid="stSidebar"] .stMarkdown p,
+    section[data-testid="stSidebar"] .stMarkdown li,
+    section[data-testid="stSidebar"] .stMarkdown strong {{
+        color: #FFFFFF !important;
     }}
     section[data-testid="stSidebar"] .stMarkdown h2 {{
         font-size: 1rem;
@@ -157,6 +364,54 @@ CUSTOM_CSS = f"""
         background-color: {ACCENT} !important;
         color: white !important;
         border: none !important;
+    }}
+
+    /* ================================
+       SIDEBAR NAVIGATION — page links
+       Give the nav its own clearly highlighted
+       state so the current page is obvious and
+       every link is easy to scan/click.
+       ================================ */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {{
+        padding-top: 6px;
+    }}
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] ul {{
+        gap: 4px;
+    }}
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a,
+    section[data-testid="stSidebar"] nav a {{
+        display: block;
+        border-radius: 8px;
+        margin: 2px 8px;
+        padding: 9px 12px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        color: #D7E2EA !important;
+        background: transparent !important;
+        border-left: 3px solid transparent !important;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }}
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a:hover,
+    section[data-testid="stSidebar"] nav a:hover {{
+        background: rgba(255,255,255,0.10) !important;
+        border-left-color: rgba(255,255,255,0.35) !important;
+        color: #FFFFFF !important;
+    }}
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"],
+    section[data-testid="stSidebar"] nav a[aria-current="page"] {{
+        background: {ACCENT} !important;
+        border-left-color: #FFFFFF !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 2px 8px rgba(15,107,120,0.45);
+    }}
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"] span,
+    section[data-testid="stSidebar"] nav a[aria-current="page"] span {{
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }}
+    section[data-testid="stSidebar"] [data-testid="stSidebarNavSeparator"] {{
+        margin: 10px 8px !important;
+        border-color: rgba(255,255,255,0.14) !important;
     }}
 
     /* ================================
@@ -240,6 +495,31 @@ def kpi_card(label: str, value: str, sub: str = "", color: str = PRIMARY, bg: st
     )
 
 
+def snapshot_row(items: list, title: str = "Decision Snapshot",
+                  caption: str = "Three signals a decision maker should notice first"):
+    """Render the 3-card 'Decision Snapshot' row (matches the pattern used
+    on Geographic & Environmental Intelligence) on any page. `items` is a
+    list of exactly 3 (label, value) tuples.
+
+    Uses the .small-card / .section-title / .section-caption classes from
+    the shared stylesheet (originally added for the Geographic page's dark
+    high-contrast cards) — works fine over the plain light page background
+    used elsewhere since it's a self-contained dark card, not a full-page
+    theme change.
+    """
+    st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-caption">{caption}</div>', unsafe_allow_html=True)
+
+    cols = st.columns(3, gap="medium")
+    for col, (label, value) in zip(cols, items):
+        with col:
+            st.markdown(
+                f'<div class="small-card"><div class="small-card-title">{label}</div>'
+                f'<div class="small-card-value">{value}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+
 def kpi_card_delta(label: str, value: str, delta: str = None, color: str = PRIMARY,
                     bg: str = None, invert: bool = False, badge: str = None, badge_color: str = None):
     """Like kpi_card(), but renders a small colored MoM delta line underneath
@@ -289,10 +569,55 @@ def kpi_card_delta(label: str, value: str, delta: str = None, color: str = PRIMA
     st.markdown(html, unsafe_allow_html=True)
 
 
+def filter_bar_header(caption: str = "Applies across all visuals on this page", title: str = "Filters"):
+    """Small header row (icon + title + caption) placed at the top of a
+    main-page filter container. Call this first inside
+    `with st.container(border=True):`, then lay out the actual filter
+    widgets in st.columns() beneath it.
+    """
+    st.markdown(
+        f'<div class="filter-bar-title">🔎 {title}</div>'
+        f'<div class="filter-bar-caption">{caption}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def section_title(title: str, caption: str = ""):
     st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
     if caption:
         st.markdown(f'<div class="section-caption">{caption}</div>', unsafe_allow_html=True)
+
+
+def insight_banner(text: str, icon: str = "📌"):
+    """The single-line 'key point' callout shown directly under the page
+    header on every dashboard (e.g. "📌 Positivity rate is down 2.5% MoM;
+    ICU utilization is MODERATE at 63.8%."). `text` may include simple
+    **bold** markdown-style markers, which are converted to <b> tags.
+
+    Styled as a highlighted callout (amber-tinted background + left
+    accent bar) so the key takeaway visually stands out from the rest
+    of the page instead of blending in as a plain card.
+    """
+    import re
+    html_text = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", text)
+    st.markdown(
+        f"""
+        <div style="
+            background-color: #FFF6E0;
+            border-left: 5px solid {WARNING};
+            border-radius: 8px;
+            padding: 13px 18px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: {TEXT};
+            box-shadow: 0 2px 8px rgba(18, 53, 91, 0.08);
+        ">
+            {icon} {html_text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def coming_soon(dashboard_name: str, description: str, planned_visuals: list[str]):
@@ -336,13 +661,43 @@ def coming_soon(dashboard_name: str, description: str, planned_visuals: list[str
 
 
 GEOGRAPHIC_CSS = """<style>
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: linear-gradient(90deg, #17324D 0%, #0F6B78 100%);
+    border-radius: 10px;
+    color: white;
+    margin-bottom: 26px;
+}
+.dash-header h1 {
+    font-size: 1.7rem;
+    margin: 0;
+    font-weight: 700;
+    color: white;
+}
+.dash-header p {
+    margin: 2px 0 0 0;
+    font-size: 0.82rem;
+    color: #FFFFFF;
+}
+.dash-badge {
+    background: rgba(255,255,255,0.15);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
 :root {
     --bg: #F5F7FA;
     --panel: #FFFFFF;
     --panel2: #17324D;
     --line: #D9E1E8;
-    --text: #1F2937;
-    --muted: #64748B;
+    --text: #000000;
+    --muted: #000000;
     --teal: #0F6B78;
     --blue: #0F6B78;
     --amber: #C98A00;
@@ -436,7 +791,7 @@ html, body, [class*="css"] {
     opacity: 1 !important;
 }
 [data-testid="stSidebar"] div[data-baseweb="select"] [aria-selected="true"] {
-    color: #1F2937 !important;
+    color: #000000 !important;
     background: #FFFFFF !important;
 }
 /* Do not let the sidebar-wide white-text rule hide selectbox values. */
@@ -444,16 +799,16 @@ html, body, [class*="css"] {
     -webkit-text-fill-color: #F8FBFF !important;
 }
 [data-testid="stSidebar"] div[data-baseweb="select"] svg {
-    fill: #64748B !important;
-    color: #64748B !important;
-    -webkit-text-fill-color: #64748B !important;
+    fill: #000000 !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 [data-testid="stSidebar"] div[data-baseweb="select"] svg {
-    fill: #64748B !important;
+    fill: #000000 !important;
 }
 /* Dropdown menu */
 div[data-baseweb="popover"] li {
-    color: #1F2937 !important;
+    color: #000000 !important;
     background: #FFFFFF !important;
 }
 div[data-baseweb="popover"] li:hover {
@@ -530,7 +885,7 @@ div[data-baseweb="popover"] li:hover {
 
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
     margin: 0 0 22px;
 }
@@ -551,11 +906,10 @@ div[data-baseweb="popover"] li:hover {
 .kpi:nth-child(5) { border-left-color: #C84343 !important; }
 .kpi:nth-child(6) { border-left-color: #2B8B70 !important; }
 .kpi:nth-child(7) { border-left-color: #2B8B70 !important; }
-.kpi:nth-child(8) { border-left-color: #C84343 !important; }
 
 .kpi-label {
-    color: #6E8194 !important;
-    font-size: .65rem !important;
+    color: #000000 !important;
+    font-size: .76rem !important;
     line-height: 1.2 !important;
     font-weight: 800 !important;
     text-transform: uppercase;
@@ -567,14 +921,14 @@ div[data-baseweb="popover"] li:hover {
 
 .kpi-value {
     color: #172A40 !important;
-    font-size: 1.55rem !important;
+    font-size: 1.65rem !important;
     line-height: 1 !important;
     font-weight: 850 !important;
     white-space: nowrap;
 }
 
 .kpi-meta {
-    color: #176A77 !important;
+    color: #000000 !important;
     font-size: .66rem !important;
     font-weight: 500 !important;
     white-space: nowrap;
@@ -584,15 +938,15 @@ div[data-baseweb="popover"] li:hover {
 
 .section-title {
     margin: 18px 0 3px;
-    color: #1F2937;
-    font-size: 1.02rem;
+    color: #000000;
+    font-size: 1.25rem;
     font-weight: 850;
     letter-spacing: -.01em;
 }
 
 .section-caption {
-    color: #64748B;
-    font-size: .72rem;
+    color: #000000;
+    font-size: .95rem;
     margin-bottom: 8px;
 }
 
@@ -616,31 +970,33 @@ div[data-baseweb="popover"] li:hover {
 }
 
 .small-card {
-    border: 1px solid var(--line);
-    background: rgba(13,28,43,.76);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-left: 4px solid #0F6B78;
+    background: #17324D;
     border-radius: 13px;
-    padding: 12px;
+    padding: 14px 16px;
     height: 100%;
+    box-shadow: 0 2px 10px rgba(18, 53, 91, 0.18);
 }
 
 .small-card-title {
-    color: #86a1b4;
-    font-size: .67rem;
+    color: #FFC24B;
+    font-size: .74rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .07em;
+    letter-spacing: .06em;
 }
 
 .small-card-value {
-    color: #F5F7FA;
-    font-size: 1.15rem;
-    font-weight: 850;
-    margin-top: 6px;
+    color: #FFFFFF;
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-top: 7px;
 }
 
 .footer {
     text-align: center;
-    color: #64748B;
+    color: #000000;
     font-size: .68rem;
     padding: 18px 0 4px;
 }
@@ -701,5 +1057,12 @@ div[data-testid="stPlotlyChart"] {
 
 
 def inject_geographic_css():
-    """Inject the visual system used by the Geographic & Environmental page."""
+    """Inject the visual system used by the Geographic & Environmental page.
+
+    Loads the shared CUSTOM_CSS first (so this page gets the same hidden
+    menu/footer, sidebar nav highlighting, and readable-caption rules as
+    every other dashboard) and then layers the page's own GEOGRAPHIC_CSS
+    on top for its distinct dark decision-support styling.
+    """
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
     st.markdown(GEOGRAPHIC_CSS, unsafe_allow_html=True)

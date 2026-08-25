@@ -1,168 +1,153 @@
-# Development of a Healthcare Operations Intelligence Dashboard with Decision Analytics — Group 2
+# HealthSentinel: Healthcare Operations Intelligence Dashboard
 
-**Turning public health data into actionable decision analytics for outbreak
-monitoring, resource planning and programme coverage.**
-
-Dashboard 5 — *Health Programs & Population Vulnerability*
-
-Built by **Samuel Manoj Pinipe** (Group 2) as part of the project internship,
-July – August 2026.
+**HealthSentinel** is an enterprise-grade Public Health Analytics & Healthcare Operations Intelligence Dashboard built with Streamlit, Python, and Plotly. It provides decision-makers, public health officials, and researchers with actionable analytics derived from a robust star-schema data warehouse model.
 
 ---
 
-## About this repository
+## 🚀 Dashboard Suite Overview
 
-This is my individual repository. It contains the dashboard page I built,
-the data behind it, the code used to clean and prepare that data, and my
-three internship artifact files.
+The application features a 7-page multi-page navigation structure wired via `st.navigation` in `app.py`:
 
-The application is built with Python (Pandas, NumPy) and Streamlit, with
-Plotly for the charts.
+| # | Page Name | Status | Key Features & Analytics |
+|---|---|---|---|
+| **0** | **Home** | ✅ Built | Hero introduction, executive summary highlights, quick navigation links, and system overview. |
+| **1** | **Executive Public Health Overview** | ✅ Built | Dual-tab dashboard (Executive Summary + Disease Surveillance), universal sidebar filters, KPI cards, case fatality rate (CFR) trends, state rankings, and risk scoring. |
+| **2** | **Geographic & Environmental Intelligence** | ✅ Built | Spatial heatmaps, Air Quality Index (AQI) tracking, rainfall analytics, sanitation scores, and environmental risk correlation with disease outbreaks. |
+| **3** | **Laboratory & Healthcare Capacity** | ✅ Built | Testing volumes, positivity rates, ICU and hospital bed occupancy metrics, lab efficiency, and vaccination coverage. |
+| **4** | **Outbreak Monitoring & Forecasting** | ✅ Built | Early warning outbreak detection, alert triggers, containment tracking, trend forecasting, and Decision Snapshots. |
+| **5** | **Health Programs & Population Vulnerability** | ✅ Built | Public health program reach, beneficiary coverage, vulnerability indexing, and urban vs. rural healthcare disparity analysis. |
+| **6** | **Upload & Custom Analysis** | ✅ Built | Ad-hoc CSV dataset upload, custom query engine, data quality inspection, and PDF/Excel report export. |
 
 ---
 
-## Folder structure
+## 📁 Project Structure
 
+```text
+HealthSentinel/
+├── app.py                                                # Application entry point & multi-page navigation setup
+├── requirements.txt                                      # Python package dependencies
+├── .gitignore                                            # Git exclusion rules for bytecode, caches, & environments
+├── README.md                                             # Project documentation
+├── .streamlit/
+│   └── config.toml                                      # Corporate visual theme configuration
+├── assets/                                               # Application branding logos & visual assets
+│   ├── home_hero.png
+│   ├── logo_full.png
+│   └── logo_icon.png
+├── dashboards/                                           # Multipage Streamlit dashboard views
+│   ├── 00_Home.py                                        # Landing page & suite introduction
+│   ├── 0_Executive_Public_Health_Overview.py             # Executive metrics & disease surveillance
+│   ├── 1_Geographic_Environmental_Intelligence.py        # Environmental & geographic risk analysis
+│   ├── 2_Laboratory_Healthcare_Capacity.py               # Lab testing & healthcare capacity metrics
+│   ├── 3_Outbreak_Monitoring_Forecasting.py              # Outbreak monitoring & predictive snapshots
+│   ├── 4_Health_Programs_Population_Vulnerability.py    # Health program coverage & population risk
+│   └── 5_Upload_Custom_Analysis.py                      # Custom file upload & interactive ad-hoc query
+├── src/                                                  # Core data processing & UI rendering modules
+│   ├── data_loader.py                                    # Primary cached CSV data loader & star-schema join engine
+│   ├── filters.py                                        # Universal sidebar filter panel component
+│   ├── geographic.py                                     # Map generation & spatial chart rendering helpers
+│   ├── kpis.py                                           # KPI calculation engine & statistical formulas
+│   ├── pdf_report.py                                     # Automated PDF report generation (ReportLab)
+│   ├── programs_data_loader.py                           # Dedicated data loader for health program metrics
+│   ├── programs_filters.py                              # Specialized filter controls for program views
+│   ├── programs_kpis.py                                 # Health program specific KPI logic
+│   ├── programs_styling.py                              # Visual styling utilities for health program views
+│   ├── report_generator.py                              # Comprehensive PDF & summary report compiler
+│   └── styling.py                                        # Global CSS stylesheet & custom HTML card components
+├── Cleaned datasets/                                     # Processed star-schema CSV tables
+│   ├── dim_dates_cleaned.csv                             # Date dimension table
+│   ├── dim_disease_cleaned.csv                           # Disease dimension table
+│   ├── dim_program_cleaned.csv                           # Public health program dimension table
+│   ├── dim_source_cleaned.csv                            # Data source dimension table
+│   ├── dim_state_cleaned.csv                            # Geographic state/region dimension table
+│   ├── fact outbreak cleaned.csv                         # Outbreak monitoring fact table
+│   ├── fact_disease_surveillance_cleaned.csv            # Disease surveillance fact table
+│   ├── fact_environmental_cleaned.csv                   # Environmental indicators fact table
+│   └── fact_lab_healthcare_cleaned.csv                  # Laboratory & healthcare capacity fact table
+├── Raw data/                                             # Original uncleaned raw data extracts
+├── Data Cleaning codes/                                  # Data preprocessing ETL scripts & notebooks
+└── EDA/                                                  # Exploratory Data Analysis notebooks & statistical scripts
 ```
-├── dashboards/
-│   └── 4_Health_Programs_Population_Vulnerability.py
-├── data/
-│   ├── fact_health_programs_cleaned.csv
-│   ├── fact_disease_surveillance_cleaned.csv
-│   ├── fact_environmental_cleaned.csv
-│   ├── fact_lab_healthcare_cleaned.csv
-│   ├── fact_outbreak_cleaned.csv
-│   ├── dim_program_cleaned.csv
-│   ├── dim_state_cleaned.csv
-│   ├── dim_dates_cleaned.csv
-│   ├── dim_disease_cleaned.csv
-│   └── dim_source_cleaned.csv
-├── src/
-│   ├── __init__.py
-│   ├── data_loader.py                   cached loading and table joins
-│   ├── filters.py                       sidebar filter panel
-│   ├── geographic.py                    geographic helper functions
-│   ├── kpis.py                          KPI calculation and formatting
-│   └── styling.py                       shared styling and components
-├── Internship_artifacts/
-│   ├── Agile_Template_v0.1_Samuel_Manoj_Pinipe.xlsx
-│   ├── Unit_Test_Plan_v0.1_Samuel_Manoj_Pinipe.xlsx
-│   └── Defect_Tracker_v0.1_Samuel_Manoj_Pinipe.xlsx
-├── app.py                               entry point and navigation
-├── requirements.txt
-├── LICENSE
-└── README.md
-```
 
 ---
 
-## How to run
+## 📊 Data Model Architecture
 
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
+The core data model follows a **Star Schema** architecture, linking dimension lookup tables with granular fact tables:
 
-The application opens at `http://localhost:8501`. Run the command from the
-project folder so that `src` and `dashboards` can be imported.
-
----
-
-## Data model
-
-A star schema of one fact table and four dimension tables. The raw fact file
-has 6,981 rows covering 32 states, 6 programmes and 36 months. After cleaning,
-6,885 rows remain.
-
-| Table | Rows | Grain |
+### Dimension Tables
+| Table | Grain | Key Columns |
 |---|---|---|
-| fact_health_programs_cleaned | 6,981 | one row per state, month and programme |
-| dim_program_cleaned | 6 | one row per programme |
-| dim_state_cleaned | 32 | one row per state |
-| dim_dates_cleaned | 36 | one row per month |
-| dim_source_cleaned | 6 | one row per source (not joined — no key in the fact table) |
+| `dim_dates` | 1 row per month | `date_id`, `year`, `month_name`, `quarter` |
+| `dim_state` | 1 row per state | `state_id`, `state_name`, `region`, `population` |
+| `dim_disease` | 1 row per disease | `disease_id`, `disease_name`, `disease_category` |
+| `dim_source` | 1 row per reporting source | `source_id`, `source_name` |
+| `dim_program` | 1 row per health program | `program_id`, `program_name` |
 
-The `data` folder also holds the cleaned fact tables for the other areas of
-the wider project (disease surveillance, environmental, laboratory and
-outbreak). My page reads only the health programme tables listed above.
+### Fact Tables
+| Table | Grain | Key Metrics & Measures |
+|---|---|---|
+| `fact_disease_surveillance` | State × Date × Disease × Source | Reported cases, active cases, recovered cases, deaths, CFR, recovery rate, risk score |
+| `fact_outbreak` | State × Date × Disease × Source | Outbreak alerts, warning level, containment rate, impacted population |
+| `fact_environmental` | State × Date | Air Quality Index (AQI), rainfall (mm), sanitation coverage, environmental risk index |
+| `fact_health_programs` | State × Date × Program | Program coverage %, beneficiaries reached, population vulnerability index |
+| `fact_lab_healthcare` | State × Date | Diagnostic tests conducted, positivity rate %, ICU bed occupancy, hospital beds, vaccination coverage |
 
 ---
+## 📐 Key KPI Definitions & Calculation Logic
 
-## KPIs
-
-| KPI | Calculation |
+| KPI | Formula / Calculation Method |
 |---|---|
-| Program Coverage | average of program_coverage_pct |
-| People Screened | sum of people_screened |
-| Beneficiaries Reached | sum of beneficiaries_reached |
-| Maternal Health Beneficiaries | sum of maternal_health_beneficiaries |
-| Child Immunization | sum of child_immunization_count |
-| High-Risk Individuals | sum of high_risk_individuals |
-| Chronic Disease Patients | sum of chronic_disease_patients |
-| Health Vulnerability Index | average of health_vulnerability_index |
+| **Total Population Under Surveillance** | $\sum \text{population\\_under\\_surveillance}$ for unique filtered regions |
+| **Total Reported Cases** | $\sum \text{total\\_reported\\_cases}$ |
+| **Case Fatality Rate (CFR %)** | $\frac{\sum \text{deaths}}{\sum \text{total\\_reported\\_cases}} \times 100$ *(Aggregated ratio)* |
+| **Recovery Rate (%)** | $\frac{\sum \text{recovered\\_cases}}{\sum \text{total\\_reported\\_cases}} \times 100$ *(Aggregated ratio)* |
+| **Positivity Rate (%)** | $\frac{\sum \text{positive\\_tests}}{\sum \text{total\\_tests}} \times 100$ |
+| **Public Health Risk Score** | Mean of `public_health_risk_score` across filtered records |
 
-Very large counts are shown in short form (K, M, B) because a ten digit value
-does not fit inside a card. The exact value is printed below each card and is
-also shown on hover, so nothing is hidden.
+> **Note on Aggregation:** Percentage metrics (CFR, Recovery Rate, and Positivity Rate) are recomputed from aggregated sums rather than averaged row-level percentages to prevent skewing and volume bias across states/diseases.
+---
+
+## 🛠️ Installation & Running Locally
+
+### Prerequisites
+* Python 3.10+ installed on your system.
+
+### Steps
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/NanubalaSravani/Development-of-a-Healthcare-Operations-Intelligence-Dashboard-with-Decision-Analytics-Group-2.git
+   cd Development-of-a-Healthcare-Operations-Intelligence-Dashboard-with-Decision-Analytics-Group-2
+   ```
+
+2. **Set Up Virtual Environment (Recommended):**
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Launch the Streamlit Application:**
+   ```bash
+   streamlit run app.py
+   ```
+
+5. **Access Dashboard:**
+   Open your browser and navigate to `http://localhost:8501`.
 
 ---
 
-## Visuals
+## 💡 Key Architectural Highlights
 
-1. Program coverage over time — line chart, one line per year.
-2. People screened against beneficiaries reached — grouped bars by state.
-3. Population split by state — stacked bars of children, adults and elderly.
-4. High-risk population by state — treemap.
-5. Composite health vulnerability index by state — bar chart.
-6. Socioeconomic score against health vulnerability — bubble chart with the
-   correlation printed below it.
-
----
-
-## Filters
-
-State, Year, Month and Programme, all in the sidebar. Every filter applies to
-every KPI and every chart. `All` means no filter for that box. If a selection
-returns no rows, the page shows a message instead of drawing empty charts.
-
----
-
-## Data cleaning decisions
-
-- Duplicate fact rows are removed before any calculation.
-- Dimension tables are made unique on their id column, so the join does not
-  increase the row count.
-- Rows with negative counts are removed, since a count cannot be negative.
-- Text and blank entries in number columns become missing values instead of
-  breaking a chart.
-- Children, adults and elderly repeat across all six programme rows for the
-  same state and month, so they are read from a duplicate free table and
-  averaged. Every other measure genuinely varies by programme and is summed.
-
----
-
-## Known limitations
-
-- The vulnerability visual is a bar chart, not a filled map. A map needs an
-  India boundary file, which is not part of this dataset.
-- There is no source filter. `dim_source_cleaned.csv` is provided, but the fact table
-  has no source key to join on.
-- Child immunization values look too large in the source data — a single
-  state, month and programme row records around 8 to 12 million against a
-  child population of about 13 million. The calculation is correct, but the
-  column appears cumulative or wrongly scaled, so the figure should be
-  confirmed before it is quoted.
-
----
-
-## Internship artifacts
-
-The `Internship_artifacts` folder holds my individually filled Agile Template,
-Unit Test Plan and Defect Tracker, covering my work from the start of the
-internship to the final submission.
-
----
-
-## License
-
-Released under the MIT License. See the LICENSE file.
+* **Single Entry Point Multipage Navigation:** Built using Streamlit's `st.navigation` and `st.Page` API for seamless sidebar switching without reloading state.
+* **Unified High-Contrast Plotly Theme:** Configured custom Plotly templates in `app.py` forcing all chart text, axes, tick marks, and legends to crisp black `#000000` text for maximum legibility.
+* **Modular Codebase:** Business logic, KPI calculations, styling, and data loading are cleanly separated into the `src/` directory.
+* **Automated PDF Reporting:** Built-in PDF generation engine using `reportlab` allows users to export executive summaries and dashboard snapshots directly.

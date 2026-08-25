@@ -100,12 +100,12 @@ def risk_color(value):
 
 def common_layout(fig, height=390):
     fig.update_layout(
-        template="plotly_white",
+        template="healthsentinel_dark_text",
         height=height,
         margin=dict(l=14, r=14, t=38, b=14),
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
-        font=dict(family="Inter, sans-serif", color="#1F2937", size=10),
+        font=dict(family="Inter, sans-serif", color="#000000", size=10),
         title="",
         legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(size=9)),
         hoverlabel=dict(bgcolor="#FFFFFF", font_size=11),
@@ -205,7 +205,7 @@ def build_state_map(env_f, ds_f):
     )
     fig.update_traces(
         marker=dict(opacity=.86, line=dict(width=1.2, color="#FFFFFF")),
-        textfont=dict(size=9, color="#1F2937"),
+        textfont=dict(size=9, color="#000000"),
     )
     fig.update_geos(
         scope="asia",
@@ -273,7 +273,7 @@ def build_radar(pressure):
         )
     )
     fig.update_layout(
-        template="plotly_white",
+        template="healthsentinel_dark_text",
         height=385,
         margin=dict(l=35, r=35, t=25, b=25),
         paper_bgcolor="#FFFFFF",
@@ -295,9 +295,9 @@ def build_gauge(environmental_risk):
         go.Indicator(
             mode="gauge+number",
             value=environmental_risk,
-            number={"font": {"size": 35, "color": "#1F2937"}},
+            number={"font": {"size": 35, "color": "#000000"}},
             title={
-                "text": f"<b>{band}</b><br><span style='font-size:10px;color:#64748B'>Environmental Risk</span>",
+                "text": f"<b>{band}</b><br><span style='font-size:10px;color:#000000'>Environmental Risk</span>",
                 "font": {"size": 14, "color": color},
             },
             gauge={
@@ -316,7 +316,7 @@ def build_gauge(environmental_risk):
         )
     )
     fig.update_layout(
-        template="plotly_white",
+        template="healthsentinel_dark_text",
         height=385,
         margin=dict(l=12, r=12, t=70, b=10),
         title_text="",
