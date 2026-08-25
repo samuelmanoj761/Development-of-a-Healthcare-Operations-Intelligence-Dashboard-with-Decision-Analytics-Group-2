@@ -117,7 +117,7 @@ The core data model follows a **Star Schema** architecture, linking dimension lo
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/NanubalaSravani/Development-of-a-Healthcare-Operations-Intelligence-Dashboard-with-Decision-Analytics-Group-2.git
+   git clone https://github.com/samuelmanoj761/Development-of-a-Healthcare-Operations-Intelligence-Dashboard-with-Decision-Analytics-Group-2.git
    cd Development-of-a-Healthcare-Operations-Intelligence-Dashboard-with-Decision-Analytics-Group-2
    ```
 
